@@ -2,46 +2,59 @@
 
 <?php
     Class App {
-        // public function index(): void{
-        //     echo "dm con cho tu";
-        // }
-        //Xu ly url
         protected $controller;
         protected $arr;
         protected $action;
-        protected $param;
+        protected $params = [];
 
-        function index(): void{
+        // Hàm này chỉ để kiểm tra và hiển thị các giá trị
+        function index(): void {
             $arr = $this->urlProcess();
-            
-            var_dump(value:$arr);
+            echo "<br>";
+            echo "Controller: " . get_class($this->controller) . "<br>";
+            echo "Action: " . $this->action . "<br>";
+            echo "Params: ";
+            var_dump($this->params);
         }
         function __construct() {
             $arr = $this->urlProcess();
 
-            if(isset($arr[0])){
-                // if(file_exists(filename:"../controller/sinhvien.php"));
-                if(file_exists(filename:"../controller/" . $arr[0] . ".php"));{
-                    echo "controller khong ton tai";
+            // Kiểm tra và xử lý controller
+            if (isset($arr[0])) {
+                if (file_exists("../app/controller/" . $arr[0] . ".php")) {
                     $this->controller = $arr[0];
+                } else {
+                    echo "Controller không tồn tại";
+                    exit;
                 }
                 unset($arr[0]);
             }
-            require_once "../controller/" . $this->controller . ".php";
-            $this->controller = new  $this->controller;
-            if(isset($arr[1])){
-                if(method_exists(object_or_class: $controller, method:$arr[1])){
-                    echo "action co ton tai";
+
+            // Yêu cầu file controller
+            require_once "../app/controller/" . $this->controller . ".php";
+            $this->controller = new $this->controller;
+            
+            // Kiểm tra và xử lý action
+            if (isset($arr[1])) {
+                if (method_exists($this->controller, $arr[1])) {
                     $this->action = $arr[1];
+                } else {
+                    echo "Action không tồn tại!";
+                    exit;
                 }
                 unset($arr[1]);
             }
-            $this->param = $arr[1];
+
+            // Lấy các tham số
+            $this->params = $arr ? array_values($arr) : [];
+
+            // Gọi phương thức action
+            call_user_func_array([$this->controller, $this->action], $this->params);
         }
         
-        function urlProcess(): array|bool{
+        function urlProcess(){
             if(isset($_GET['url'])){
-                return explode(separator:"/", string:filter_var(value: trim(string: $_GET["url"], characters:"/")));
+                return explode(separator:"/", string:filter_var(value: trim(string: $_GET["url"], characters:"/"), filter: FILTER_SANITIZE_URL));
             }
         }
     }
